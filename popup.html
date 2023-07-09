@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Looper</title>
+    <link rel="stylesheet" href="popup.css">
+  </head>
+  <body>
+    <h1>Looper</h1>
+    <label>Start Time</label>
+    <div class="time-picker" id="startTime">
+      <input type="number" placeholder="Hours" min="0">
+      <input type="number" placeholder="Minutes" min="0" max="59">
+      <input type="number" placeholder="Seconds" min="0" max="59">
+    </div>
+    <label>End Time</label>
+    <div class="time-picker" id="endTime">
+      <input type="number" placeholder="Hours" min="0">
+      <input type="number" placeholder="Minutes" min="0" max="59">
+      <input type="number" placeholder="Seconds" min="0" max="59">
+    </div>
+    <p id="maxTimeHint"></p>
+    <button id="setLoop">Set Loop</button>
+    <button id="stopLoop">Stop Loop</button>
+    <p id="error"></p>
+    <script src="popup.js"></script>
+  </body>
+</html>

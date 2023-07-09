@@ -1,0 +1,25 @@
+{
+    "name": "YouTube Video Looper",
+    "version": "1.0",
+    "permissions": ["activeTab", "tabs", "storage"],
+    "background": {
+        "service_worker": "background.js"
+    },
+    "web_accessible_resources": [
+        {
+            "matches": ["https://*.youtube.com/*"],
+            "resources" : [""]
+        }
+    ],
+    "content_scripts": [
+        {
+            "matches": ["https://*.youtube.com/*"],
+            "js": ["contentScript.js"]
+        }
+    ],
+    "action": {
+        "default_title": "YouTube Video Looper",
+        "default_popup": "popup.html"
+    },
+    "manifest_version": 3
+}

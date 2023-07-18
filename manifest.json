@@ -1,5 +1,5 @@
 {
-    "name": "YouTube Video Looper",
+    "name": "YouTube Loopy",
     "version": "1.0",
     "permissions": ["activeTab", "tabs", "storage"],
     "background": {
@@ -18,7 +18,7 @@
         }
     ],
     "action": {
-        "default_title": "YouTube Video Looper",
+        "default_title": "YouTube Loopy",
         "default_popup": "popup.html"
     },
     "manifest_version": 3

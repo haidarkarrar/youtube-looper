@@ -20,6 +20,17 @@ function hmsToSeconds(arr) {
     return h * 3600 + m * 60 + s;
 }
 
+function secondsToTime(d) {
+    d = Number(d);
+    const h = Math.floor(d / 3600);
+    const m = Math.floor((d % 3600) / 60);
+    const s = Math.floor((d % 3600) % 60);
+    const hDisplay = h > 0 ? h + ":" : "00:";
+    const mDisplay = m > 0 ? m + ":" : "00:";
+    const sDisplay = s > 0 ? s : "00:";
+    return hDisplay + mDisplay + sDisplay;
+}
+
 function validateInput(h, m, s, maxH, maxM, maxS) {
     if (
         h < 0 ||
@@ -57,6 +68,12 @@ document.getElementById("stopLoop").addEventListener("click", () => {
         chrome.tabs.sendMessage(tabs[0].id, {
             type: "STOP_LOOP",
         });
+    });
+
+    chrome.storage.local.remove(['start', 'end']).then(() => {
+        document.getElementById(
+            "currentLoop"
+        ).textContent = `Current loop: 00:00:00 - 00:00:00`;
     });
 });
 
@@ -108,4 +125,30 @@ document.getElementById("setLoop").addEventListener("click", () => {
         });
     });
 
+    const startTime = secondsToTime(start);
+    const endTime = secondsToTime(end);
+
+    chrome.storage.local
+        .set({
+            start: startTime,
+            end: endTime,
+        })
+        .then(() => {
+            document.getElementById("currentLoop").textContent = `Current loop: ${
+                startTime || "00:00:00"
+            } - ${endTime || "00:00:00"}`;
+        });
+});
+
+document.addEventListener("DOMContentLoaded", (event) => {
+    chrome.storage.local.get(["start", "end"]).then((result) => {
+        console.log(result);
+
+        const startTime = result?.start || "00:00:00";
+        const endTime = result?.end || "00:00:00";
+
+        document.getElementById(
+            "currentLoop"
+        ).textContent = `Current loop: ${startTime} - ${endTime}`;
+    });
 });

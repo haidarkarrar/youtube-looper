@@ -26,3 +26,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         }
     }
 });
+
+window.addEventListener("beforeunload", (event) => {
+    chrome.storage.local.remove(['start', 'end']);
+});

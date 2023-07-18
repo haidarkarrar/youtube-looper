@@ -8,7 +8,7 @@
     "web_accessible_resources": [
         {
             "matches": ["https://*.youtube.com/*"],
-            "resources" : [""]
+            "resources": [""]
         }
     ],
     "content_scripts": [
@@ -18,8 +18,20 @@
         }
     ],
     "action": {
+        "default_icon": {
+            "16": "assets/logo.png",
+            "24": "assets/logo.png",
+            "32": "assets/logo.png"
+        },
         "default_title": "YouTube Loopy",
         "default_popup": "popup.html"
     },
+    "icons": {
+        "16": "assets/logo.png",
+        "32": "assets/logo.png",
+        "48": "assets/logo.png",
+        "128": "assets/logo.png"
+    },
+    "description": "An Extenstion that lets you loop YouTube Videos through specific time frames.",
     "manifest_version": 3
 }

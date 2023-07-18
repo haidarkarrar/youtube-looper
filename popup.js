@@ -3,8 +3,8 @@ let videoDuration = 0;
 function secondsToHms(d) {
     d = Number(d);
     const h = Math.floor(d / 3600);
-    const m = Math.floor(d % 3600 / 60);
-    const s = Math.floor(d % 3600 % 60);
+    const m = Math.floor((d % 3600) / 60);
+    const s = Math.floor((d % 3600) % 60);
     return [h, m, s];
 }
 
@@ -21,7 +21,16 @@ function hmsToSeconds(arr) {
 }
 
 function validateInput(h, m, s, maxH, maxM, maxS) {
-    if (h < 0 || m < 0 || s < 0 || m > 59 || s > 59 || h > maxH || (h === maxH && m > maxM) || (h === maxH && m === maxM && s > maxS)) {
+    if (
+        h < 0 ||
+        m < 0 ||
+        s < 0 ||
+        m > 59 ||
+        s > 59 ||
+        h > maxH ||
+        (h === maxH && m > maxM) ||
+        (h === maxH && m === maxM && s > maxS)
+    ) {
         return false;
     } else {
         return true;
@@ -30,27 +39,34 @@ function validateInput(h, m, s, maxH, maxM, maxS) {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "VIDEO_DURATION") {
-        videoDuration = request.duration;  // Store the video duration.
+        videoDuration = request.duration; // Store the video duration.
         const [h, m, s] = secondsToHms(videoDuration);
-        document.getElementById('maxTimeHint').textContent = "Max time: " + h + ":" + m + ":" + s;
-        const endInputs = document.getElementById('endTime').getElementsByTagName('input');
+        document.getElementById("maxTimeHint").textContent =
+            "Max time: " + h + ":" + m + ":" + s;
+        const endInputs = document
+            .getElementById("endTime")
+            .getElementsByTagName("input");
         endInputs[0].max = h;
         endInputs[1].max = m;
         endInputs[2].max = s;
     }
 });
 
-document.getElementById('stopLoop').addEventListener('click', () => {
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+document.getElementById("stopLoop").addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         chrome.tabs.sendMessage(tabs[0].id, {
-            type: "STOP_LOOP"
+            type: "STOP_LOOP",
         });
     });
 });
 
-document.getElementById('setLoop').addEventListener('click', () => {
-    const startInputs = document.getElementById('startTime').getElementsByTagName('input');
-    const endInputs = document.getElementById('endTime').getElementsByTagName('input');
+document.getElementById("setLoop").addEventListener("click", () => {
+    const startInputs = document
+        .getElementById("startTime")
+        .getElementsByTagName("input");
+    const endInputs = document
+        .getElementById("endTime")
+        .getElementsByTagName("input");
 
     const startH = parseInt(startInputs[0].value);
     const startM = parseInt(startInputs[1].value);
@@ -60,14 +76,16 @@ document.getElementById('setLoop').addEventListener('click', () => {
     const endS = parseInt(endInputs[2].value);
 
     const [maxH, maxM, maxS] = secondsToHms(videoDuration);
-    
+
     if (!validateInput(startH, startM, startS, maxH, maxM, maxS)) {
-        document.getElementById('error').textContent = 'Invalid start time. Please check your input.';
+        document.getElementById("error").textContent =
+            "Invalid start time. Please check your input.";
         return;
     }
 
     if (!validateInput(endH, endM, endS, maxH, maxM, maxS)) {
-        document.getElementById('error').textContent = 'Invalid end time. Please check your input.';
+        document.getElementById("error").textContent =
+            "Invalid end time. Please check your input.";
         return;
     }
 
@@ -75,17 +93,19 @@ document.getElementById('setLoop').addEventListener('click', () => {
     const end = hmsToSeconds([endH, endM, endS]);
 
     if (start >= end) {
-        document.getElementById('error').textContent = 'End time must be greater than start time.';
+        document.getElementById("error").textContent =
+            "End time must be greater than start time.";
         return;
     }
 
-    document.getElementById('error').textContent = ''; // clear the error message
+    document.getElementById("error").textContent = ""; // clear the error message
 
-    chrome.tabs.query({active: true, currentWindow: true}, (tabs) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
         chrome.tabs.sendMessage(tabs[0].id, {
             type: "SET_LOOP",
             start: start,
-            end: end
+            end: end,
         });
     });
+
 });

@@ -48,18 +48,37 @@ function validateInput(h, m, s, maxH, maxM, maxS) {
     }
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+function updateVideoDuration(duration) {
+    if (!Number.isFinite(duration) || duration <= 0) {
+        return;
+    }
+    videoDuration = duration;
+    document.querySelectorAll(".time-picker input, #setLoop, #stopLoop")
+        .forEach((control) => { control.disabled = false; });
+    const [h, m, s] = secondsToHms(videoDuration);
+    document.getElementById("maxTimeHint").textContent =
+        "Max time: " + h + ":" + m + ":" + s;
+    const endInputs = document
+        .getElementById("endTime")
+        .getElementsByTagName("input");
+    endInputs[0].max = h;
+    endInputs[1].max = m;
+    endInputs[2].max = s;
+}
+
+chrome.runtime.onMessage.addListener((request) => {
     if (request.type === "VIDEO_DURATION") {
-        videoDuration = request.duration; // Store the video duration.
-        const [h, m, s] = secondsToHms(videoDuration);
-        document.getElementById("maxTimeHint").textContent =
-            "Max time: " + h + ":" + m + ":" + s;
-        const endInputs = document
-            .getElementById("endTime")
-            .getElementsByTagName("input");
-        endInputs[0].max = h;
-        endInputs[1].max = m;
-        endInputs[2].max = s;
+        updateVideoDuration(request.duration);
+    }
+});
+
+chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+        chrome.tabs.sendMessage(tabs[0].id, { type: "GET_VIDEO_DURATION" }, (response) => {
+            if (response && Number.isFinite(response.duration) && response.duration > 0) {
+                updateVideoDuration(response.duration);
+            }
+        });
     }
 });
 

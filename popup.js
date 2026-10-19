@@ -1,62 +1,69 @@
 let videoDuration = 0;
+let activeVideoId = null;
+
+function getVideoId(url) {
+    try {
+        const parsedUrl = new URL(url);
+        if (parsedUrl.hostname.endsWith("youtube.com")) {
+            return parsedUrl.searchParams.get("v") ||
+                parsedUrl.pathname.match(/^\/(?:shorts|embed)\/([^/?]+)/)?.[1] || null;
+        }
+        if (parsedUrl.hostname === "youtu.be") {
+            return parsedUrl.pathname.slice(1).split("/")[0] || null;
+        }
+    } catch (error) {
+        return null;
+    }
+    return null;
+}
+
+function rangeStorageKey(videoId) {
+    return `loopRange:${videoId}`;
+}
+
+function displayRange(range) {
+    const startTime = range?.start || "00:00:00";
+    const endTime = range?.end || "00:00:00";
+    document.getElementById("currentLoop").textContent = `Current loop: ${startTime} - ${endTime}`;
+}
+
+function getActiveTab(callback) {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        const tab = tabs[0];
+        activeVideoId = tab ? getVideoId(tab.url || "") : null;
+        callback(tab);
+    });
+}
 
 function secondsToHms(d) {
     d = Number(d);
-    const h = Math.floor(d / 3600);
-    const m = Math.floor((d % 3600) / 60);
-    const s = Math.floor((d % 3600) % 60);
-    return [h, m, s];
+    return [Math.floor(d / 3600), Math.floor((d % 3600) / 60), Math.floor(d % 60)];
 }
 
 function hmsToSeconds(arr) {
-    let h = parseInt(arr[0]);
-    let m = parseInt(arr[1]);
-    let s = parseInt(arr[2]);
-
-    h = isNaN(h) ? 0 : h;
-    m = isNaN(m) ? 0 : m;
-    s = isNaN(s) ? 0 : s;
-
+    const [h, m, s] = arr.map((value) => {
+        const parsed = parseInt(value);
+        return isNaN(parsed) ? 0 : parsed;
+    });
     return h * 3600 + m * 60 + s;
 }
 
 function secondsToTime(d) {
-    d = Number(d);
-    const h = Math.floor(d / 3600);
-    const m = Math.floor((d % 3600) / 60);
-    const s = Math.floor((d % 3600) % 60);
-    const hDisplay = h > 0 ? h + ":" : "00:";
-    const mDisplay = m > 0 ? m + ":" : "00:";
-    const sDisplay = s > 0 ? s : "00:";
-    return hDisplay + mDisplay + sDisplay;
+    const [h, m, s] = secondsToHms(d);
+    return `${h > 0 ? h : "00"}:${m > 0 ? m : "00"}:${s > 0 ? s : "00"}`;
 }
 
 function validateInput(h, m, s, maxH, maxM, maxS) {
-    if (
-        h < 0 ||
-        m < 0 ||
-        s < 0 ||
-        m > 59 ||
-        s > 59 ||
-        h > maxH ||
-        (h === maxH && m > maxM) ||
-        (h === maxH && m === maxM && s > maxS)
-    ) {
-        return false;
-    } else {
-        return true;
-    }
+    return !(h < 0 || m < 0 || s < 0 || m > 59 || s > 59 || h > maxH ||
+        (h === maxH && m > maxM) || (h === maxH && m === maxM && s > maxS));
 }
 
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((request) => {
     if (request.type === "VIDEO_DURATION") {
-        videoDuration = request.duration; // Store the video duration.
+        videoDuration = request.duration;
         const [h, m, s] = secondsToHms(videoDuration);
-        document.getElementById("maxTimeHint").textContent =
-            "Max time: " + h + ":" + m + ":" + s;
-        const endInputs = document
-            .getElementById("endTime")
-            .getElementsByTagName("input");
+        document.getElementById("maxTimeHint").textContent = `Max time: ${h}:${m}:${s}`;
+        const endInputs = document.getElementById("endTime").getElementsByTagName("input");
         endInputs[0].max = h;
         endInputs[1].max = m;
         endInputs[2].max = s;
@@ -64,91 +71,56 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 document.getElementById("stopLoop").addEventListener("click", () => {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-            type: "STOP_LOOP",
-        });
-    });
-
-    chrome.storage.local.remove(['start', 'end']).then(() => {
-        document.getElementById(
-            "currentLoop"
-        ).textContent = `Current loop: 00:00:00 - 00:00:00`;
+    getActiveTab((tab) => {
+        if (tab) chrome.tabs.sendMessage(tab.id, { type: "STOP_LOOP" });
+        if (activeVideoId) chrome.storage.local.remove(rangeStorageKey(activeVideoId));
+        displayRange(null);
     });
 });
 
 document.getElementById("setLoop").addEventListener("click", () => {
-    const startInputs = document
-        .getElementById("startTime")
-        .getElementsByTagName("input");
-    const endInputs = document
-        .getElementById("endTime")
-        .getElementsByTagName("input");
-
-    const startH = parseInt(startInputs[0].value);
-    const startM = parseInt(startInputs[1].value);
-    const startS = parseInt(startInputs[2].value);
-    const endH = parseInt(endInputs[0].value);
-    const endM = parseInt(endInputs[1].value);
-    const endS = parseInt(endInputs[2].value);
-
+    const startInputs = document.getElementById("startTime").getElementsByTagName("input");
+    const endInputs = document.getElementById("endTime").getElementsByTagName("input");
+    const startParts = Array.from(startInputs, (input) => parseInt(input.value));
+    const endParts = Array.from(endInputs, (input) => parseInt(input.value));
     const [maxH, maxM, maxS] = secondsToHms(videoDuration);
 
-    if (!validateInput(startH, startM, startS, maxH, maxM, maxS)) {
-        document.getElementById("error").textContent =
-            "Invalid start time. Please check your input.";
+    if (!validateInput(...startParts, maxH, maxM, maxS)) {
+        document.getElementById("error").textContent = "Invalid start time. Please check your input.";
         return;
     }
-
-    if (!validateInput(endH, endM, endS, maxH, maxM, maxS)) {
-        document.getElementById("error").textContent =
-            "Invalid end time. Please check your input.";
+    if (!validateInput(...endParts, maxH, maxM, maxS)) {
+        document.getElementById("error").textContent = "Invalid end time. Please check your input.";
         return;
     }
-
-    const start = hmsToSeconds([startH, startM, startS]);
-    const end = hmsToSeconds([endH, endM, endS]);
-
+    const start = hmsToSeconds(startParts);
+    const end = hmsToSeconds(endParts);
     if (start >= end) {
-        document.getElementById("error").textContent =
-            "End time must be greater than start time.";
+        document.getElementById("error").textContent = "End time must be greater than start time.";
         return;
     }
+    document.getElementById("error").textContent = "";
 
-    document.getElementById("error").textContent = ""; // clear the error message
-
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        chrome.tabs.sendMessage(tabs[0].id, {
-            type: "SET_LOOP",
-            start: start,
-            end: end,
-        });
+    getActiveTab((tab) => {
+        if (!tab || !activeVideoId) {
+            document.getElementById("error").textContent = "Open a YouTube video to set a loop.";
+            return;
+        }
+        chrome.tabs.sendMessage(tab.id, { type: "SET_LOOP", start, end });
+        const range = { start: secondsToTime(start), end: secondsToTime(end) };
+        chrome.storage.local.set({ [rangeStorageKey(activeVideoId)]: range })
+            .then(() => displayRange(range));
     });
-
-    const startTime = secondsToTime(start);
-    const endTime = secondsToTime(end);
-
-    chrome.storage.local
-        .set({
-            start: startTime,
-            end: endTime,
-        })
-        .then(() => {
-            document.getElementById("currentLoop").textContent = `Current loop: ${
-                startTime || "00:00:00"
-            } - ${endTime || "00:00:00"}`;
-        });
 });
 
-document.addEventListener("DOMContentLoaded", (event) => {
-    chrome.storage.local.get(["start", "end"]).then((result) => {
-        console.log(result);
-
-        const startTime = result?.start || "00:00:00";
-        const endTime = result?.end || "00:00:00";
-
-        document.getElementById(
-            "currentLoop"
-        ).textContent = `Current loop: ${startTime} - ${endTime}`;
+document.addEventListener("DOMContentLoaded", () => {
+    getActiveTab(() => {
+        if (!activeVideoId) {
+            displayRange(null);
+            return;
+        }
+        chrome.storage.local.get(rangeStorageKey(activeVideoId)).then((result) => {
+            displayRange(result[rangeStorageKey(activeVideoId)]);
+        });
     });
 });

@@ -8,19 +8,19 @@
     <h1>Loopy</h1>
     <label>Start Time</label>
     <div class="time-picker" id="startTime">
-      <input type="number" placeholder="Hours" min="0">
-      <input type="number" placeholder="Minutes" min="0" max="59">
-      <input type="number" placeholder="Seconds" min="0" max="59">
+      <input type="number" placeholder="Hours" min="0" disabled>
+      <input type="number" placeholder="Minutes" min="0" max="59" disabled>
+      <input type="number" placeholder="Seconds" min="0" max="59" disabled>
     </div>
     <label>End Time</label>
     <div class="time-picker" id="endTime">
-      <input type="number" placeholder="Hours" min="0">
-      <input type="number" placeholder="Minutes" min="0" max="59">
-      <input type="number" placeholder="Seconds" min="0" max="59">
+      <input type="number" placeholder="Hours" min="0" disabled>
+      <input type="number" placeholder="Minutes" min="0" max="59" disabled>
+      <input type="number" placeholder="Seconds" min="0" max="59" disabled>
     </div>
     <p id="maxTimeHint"></p>
-    <button id="setLoop">Set Loop</button>
-    <button id="stopLoop">Stop Loop</button>
+    <button id="setLoop" disabled>Set Loop</button>
+    <button id="stopLoop" disabled>Stop Loop</button>
     <p id="error"></p>
     <p id="currentLoop"></p>
     <script src="popup.js"></script>

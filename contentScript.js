@@ -10,7 +10,13 @@ const loopFunction = function () {
 };
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.type === "SET_LOOP") {
+    if (request.type === "GET_VIDEO_DURATION") {
+        const duration = video?.duration;
+        sendResponse({
+            type: "VIDEO_DURATION",
+            duration: Number.isFinite(duration) && duration >= 0 ? duration : null,
+        });
+    } else if (request.type === "SET_LOOP") {
         start = request.start;
         end = request.end;
 

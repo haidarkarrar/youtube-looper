@@ -1,4 +1,4 @@
-let videoDuration = 0;
+let videoDuration = null;
 
 function secondsToHms(d) {
     d = Number(d);
@@ -50,18 +50,26 @@ function validateInput(h, m, s, maxH, maxM, maxS) {
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "VIDEO_DURATION") {
-        videoDuration = request.duration; // Store the video duration.
-        const [h, m, s] = secondsToHms(videoDuration);
-        document.getElementById("maxTimeHint").textContent =
-            "Max time: " + h + ":" + m + ":" + s;
-        const endInputs = document
-            .getElementById("endTime")
-            .getElementsByTagName("input");
-        endInputs[0].max = h;
-        endInputs[1].max = m;
-        endInputs[2].max = s;
+        updateVideoDuration(request.duration);
     }
 });
+
+function updateVideoDuration(duration) {
+    if (!Number.isFinite(duration) || duration < 0) {
+        return;
+    }
+
+    videoDuration = duration;
+    const [h, m, s] = secondsToHms(videoDuration);
+    document.getElementById("maxTimeHint").textContent =
+        "Max time: " + h + ":" + m + ":" + s;
+    const endInputs = document
+        .getElementById("endTime")
+        .getElementsByTagName("input");
+    endInputs[0].max = h;
+    endInputs[1].max = m;
+    endInputs[2].max = s;
+}
 
 document.getElementById("stopLoop").addEventListener("click", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -77,7 +85,13 @@ document.getElementById("stopLoop").addEventListener("click", () => {
     });
 });
 
-document.getElementById("setLoop").addEventListener("click", () => {
+function setLoop() {
+    if (!Number.isFinite(videoDuration)) {
+        document.getElementById("error").textContent =
+            "Video duration is not available yet. Please try again.";
+        return;
+    }
+
     const startInputs = document
         .getElementById("startTime")
         .getElementsByTagName("input");
@@ -138,9 +152,43 @@ document.getElementById("setLoop").addEventListener("click", () => {
                 startTime || "00:00:00"
             } - ${endTime || "00:00:00"}`;
         });
+}
+
+document.getElementById("setLoop").addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]) {
+            setLoop();
+            return;
+        }
+
+        chrome.tabs.sendMessage(
+            tabs[0].id,
+            { type: "GET_VIDEO_DURATION" },
+            (response) => {
+                if (response?.type === "VIDEO_DURATION") {
+                    updateVideoDuration(response.duration);
+                }
+                setLoop();
+            }
+        );
+    });
 });
 
 document.addEventListener("DOMContentLoaded", (event) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs[0]) {
+            chrome.tabs.sendMessage(
+                tabs[0].id,
+                { type: "GET_VIDEO_DURATION" },
+                (response) => {
+                    if (response?.type === "VIDEO_DURATION") {
+                        updateVideoDuration(response.duration);
+                    }
+                }
+            );
+        }
+    });
+
     chrome.storage.local.get(["start", "end"]).then((result) => {
         console.log(result);
 

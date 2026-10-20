@@ -1,4 +1,4 @@
-let videoDuration = 0;
+let videoDuration = null;
 
 function secondsToHms(d) {
     d = Number(d);
@@ -55,6 +55,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function updateVideoDuration(duration) {
+    if (!Number.isFinite(duration) || duration < 0) {
+        return;
+    }
+
     videoDuration = duration;
     const [h, m, s] = secondsToHms(videoDuration);
     document.getElementById("maxTimeHint").textContent =
@@ -82,6 +86,12 @@ document.getElementById("stopLoop").addEventListener("click", () => {
 });
 
 document.getElementById("setLoop").addEventListener("click", () => {
+    if (!Number.isFinite(videoDuration)) {
+        document.getElementById("error").textContent =
+            "Video duration is not available yet. Please try again.";
+        return;
+    }
+
     const startInputs = document
         .getElementById("startTime")
         .getElementsByTagName("input");

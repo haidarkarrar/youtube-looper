@@ -85,7 +85,7 @@ document.getElementById("stopLoop").addEventListener("click", () => {
     });
 });
 
-document.getElementById("setLoop").addEventListener("click", () => {
+function setLoop() {
     if (!Number.isFinite(videoDuration)) {
         document.getElementById("error").textContent =
             "Video duration is not available yet. Please try again.";
@@ -152,6 +152,26 @@ document.getElementById("setLoop").addEventListener("click", () => {
                 startTime || "00:00:00"
             } - ${endTime || "00:00:00"}`;
         });
+}
+
+document.getElementById("setLoop").addEventListener("click", () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (!tabs[0]) {
+            setLoop();
+            return;
+        }
+
+        chrome.tabs.sendMessage(
+            tabs[0].id,
+            { type: "GET_VIDEO_DURATION" },
+            (response) => {
+                if (response?.type === "VIDEO_DURATION") {
+                    updateVideoDuration(response.duration);
+                }
+                setLoop();
+            }
+        );
+    });
 });
 
 document.addEventListener("DOMContentLoaded", (event) => {

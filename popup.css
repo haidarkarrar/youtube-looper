@@ -1,18 +1,18 @@
 body {
-    background-color: #402429;
+    background-color: #171719;
     font-family: Arial, sans-serif;
     padding: 15px;
-    color: #ffffff;
-    border: 1px solid #402429;
+    color: #c8c8cc;
+    border: 1px solid #171719;
 }
 
 h1 {
-    color: #ffffff;
+    color: #d0d0d4;
     font-size: 18px;
 }
 
 label {
-    color: #ffffff;
+    color: #c8c8cc;
 }
 
 .time-picker {
@@ -25,38 +25,39 @@ label {
     width: 60px;
     height: 30px;
     margin-right: 10px;
-    border: 1px solid #402429;
+    border: 1px solid #3b3b40;
     border-radius: 3px;
     padding: 5px;
-    background-color: #e0e0e0;
+    background-color: #2b2b30;
+    color: #dedee2;
 }
 
 button {
     width: 100%;
     height: 35px;
-    background-color: #e74f6d;
+    background-color: #7b3442;
     border: none;
-    color: #ffffff;
+    color: #dedee2;
     margin-top: 10px;
     border-radius: 3px;
     cursor: pointer;
 }
 
 button:hover {
-    background-color: #c6435e;
+    background-color: #69303c;
 }
 
 button:disabled {
-    background-color: #c6435e;
+    background-color: #56565c;
     cursor: not-allowed;
 }
 
 #error {
-    color: #e74f6d;
+    color: #c77a88;
     margin-top: 10px;
 }
 
 #maxTimeHint {
-    color: #ffffff;
+    color: #a9a9af;
     margin-bottom: 10px;
 }

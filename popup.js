@@ -4,7 +4,7 @@ let activeVideoId = null;
 function getVideoId(url) {
     try {
         const parsedUrl = new URL(url);
-        if (parsedUrl.hostname.endsWith("youtube.com")) {
+        if (parsedUrl.hostname === "youtube.com" || parsedUrl.hostname.endsWith(".youtube.com")) {
             return parsedUrl.searchParams.get("v") ||
                 parsedUrl.pathname.match(/^\/(?:shorts|embed)\/([^/?]+)/)?.[1] || null;
         }
